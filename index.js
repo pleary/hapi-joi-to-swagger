@@ -1,6 +1,6 @@
 'use strict';
 
-var joi = require('joi');
+var joi = require('@hapi/joi');
 var find = require('lodash.find');
 var get = require('lodash.get');
 var set = require('lodash.set');
