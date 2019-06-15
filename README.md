@@ -48,7 +48,7 @@ joi.object().keys({
 ## Usage
 
 ```js
-var j2s = require('joi-to-swagger');
+var j2s = require('hapi-joi-to-swagger');
 
 var {swagger, components} = j2s(mySchema, existingComponents);
 ```
