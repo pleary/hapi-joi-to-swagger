@@ -74,7 +74,7 @@ module.exports = exports = function parse (schema, existingComponents) {
 	}
 
 	var defaultValue = get(schema, '_flags.default');
-	if (defaultValue && typeof defaultValue !== 'function') {
+	if ( ( defaultValue || defaultValue === false ) && typeof defaultValue !== 'function') {
 		swagger.default = defaultValue;
 	}
 
@@ -218,7 +218,15 @@ var parseAsType = {
 		return swagger;
 	},
 	date: (/* schema */) => ({ type: 'string', format: 'date-time' }),
-	boolean: (/* schema */) => ({ type: 'boolean' }),
+	boolean: (schema, existingComponents, newComponentsByRef) => {
+		var swagger = { type: 'boolean' };
+		var valids = schema._valids.values().filter((s) => typeof s === 'boolean');
+		if (get(schema, '_flags.allowOnly') && valids.length) {
+			swagger.enum = valids;
+		}
+
+		return swagger;
+	},
 	alternatives: (schema, existingComponents, newComponentsByRef) => {
 		var index = meta(schema, 'swaggerIndex') || 0;
 
@@ -251,11 +259,11 @@ var parseAsType = {
 		var index = meta(schema, 'swaggerIndex') || 0;
 		var itemsSchema = get(schema, [ '_inner', 'items', index ]);
 
-		if (!itemsSchema) throw Error('Array schema does not define an items schema at index ' + index);
-
-		var items = exports(itemsSchema, merge({}, existingComponents || {}, newComponentsByRef || {}));
-
-		merge(newComponentsByRef, items.components || {});
+		var items;
+		if (itemsSchema) {
+			items = exports(itemsSchema, merge({}, existingComponents || {}, newComponentsByRef || {}));
+			merge(newComponentsByRef, items.components || {});
+		}
 
 		var swagger = { type: 'array' };
 
@@ -279,7 +287,7 @@ var parseAsType = {
 			swagger.uniqueItems = true;
 		}
 
-		swagger.items = items.swagger;
+		swagger.items = items ? items.swagger : { };
 		return swagger;
 	},
 	object: (schema, existingComponents, newComponentsByRef) => {
@@ -320,6 +328,7 @@ var parseAsType = {
 
 		return swagger;
 	},
+	any: (schema, existingComponents, newComponentsByRef) => ( { } )
 };
 
 function meta (schema, key) {
